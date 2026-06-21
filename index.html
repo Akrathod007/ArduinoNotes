@@ -87,7 +87,7 @@
   }
   header h1 span{color:var(--teal);}
   header p.lead{
-    max-width:620px; color:var(--silk-dim); font-size:1rem; position:relative;
+    max-width:640px; color:var(--silk-dim); font-size:1rem; position:relative;
   }
   .pin-legend{
     display:flex; gap:22px; flex-wrap:wrap; margin-top:30px; position:relative;
@@ -118,6 +118,11 @@
     display:flex; flex-wrap:wrap; gap:8px;
     margin:40px 0 8px;
   }
+  .toc-group-label{
+    width:100%; font-size:.68rem; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--silk-dim); margin:14px 0 2px;
+  }
+  .toc-group-label:first-child{ margin-top:0; }
   .toc a{
     text-decoration:none; font-size:.74rem; color:var(--silk-dim);
     border:1px solid var(--line); padding:6px 12px; border-radius:20px;
@@ -140,6 +145,9 @@
   .section-head h2{
     font-size:1.55rem; color:#fff; margin:0; font-weight:600;
   }
+  .section-sub{
+    color:var(--silk-dim); font-size:.85rem; margin:-14px 0 24px;
+  }
 
   .card{
     background:var(--board);
@@ -161,6 +169,10 @@
   .card .badge{
     display:inline-block; font-size:.68rem; background:var(--teal-dim); color:#dffaf3;
     padding:1px 8px; border-radius:10px; margin-left:8px; vertical-align:middle;
+  }
+  .card .sig{
+    display:inline-block; background:rgba(0,0,0,0.3); color:var(--pad);
+    padding:3px 9px; border-radius:3px; font-size:.78rem; margin:4px 0 12px;
   }
 
   .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
@@ -206,6 +218,12 @@
   .pin-chip.pwm{ border-color:var(--copper); color:var(--copper-bright); }
   .pin-chip.an{ border-color:var(--teal-dim); color:var(--teal); }
 
+  /* function card layout for two-column code/desc */
+  .fn-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0; }
+  .fn-grid .fn-desc{ padding-right:20px; }
+  .fn-grid .fn-code pre{ margin-top:0; }
+  @media (max-width:760px){ .fn-grid{ grid-template-columns:1fr; } .fn-grid .fn-desc{ padding-right:0; margin-bottom:14px; } }
+
   footer{
     text-align:center; padding:50px 8vw; color:var(--silk-dim); font-size:.75rem;
     border-top:1px solid var(--line);
@@ -221,7 +239,6 @@
 <header>
   <div class="eyebrow"><span class="dot"></span> ATMEGA328P · 16MHz · 5V LOGIC</div>
   <h1>Arduino <span>UNO</span><br>Field Reference</h1>
-  <!-- <p class="lead">Every pin, part, and pattern on the board — board anatomy, breadboarding basics, and ready-to-paste sketches for buttons, RGB LEDs, buzzers, servos, ultrasonic and PIR sensors.</p> -->
   <div class="pin-legend">
     <span><span class="swatch" style="background:var(--teal)"></span>Digital / Logic</span>
     <span><span class="swatch" style="background:var(--copper)"></span>PWM (~)</span>
@@ -231,26 +248,38 @@
 </header>
 
 <div class="search-wrap">
-  <input id="search" type="text" placeholder="Filter components… e.g. servo, PWM, pull-up">
+  <input id="search" type="text" placeholder="Filter components… e.g. servo, PWM, pull-up, tone">
 </div>
 
 <main>
 
   <nav class="toc">
+    <span class="toc-group-label">Hardware</span>
     <a href="#board">Board Anatomy</a>
     <a href="#pins">Pin Map</a>
     <a href="#breadboard">Breadboard</a>
     <a href="#parts">Core Parts</a>
     <a href="#rgb">RGB LED</a>
-    <a href="#pwm">PWM</a>
     <a href="#button">Button</a>
     <a href="#buzzer">Buzzer</a>
     <a href="#power">9V Battery</a>
     <a href="#pot">Potentiometer</a>
-    <a href="#map">map()</a>
     <a href="#ultrasonic">Ultrasonic</a>
     <a href="#pir">PIR Motion</a>
     <a href="#servo">Servo</a>
+    <span class="toc-group-label">Functions</span>
+    <a href="#fn-pinmode">pinMode</a>
+    <a href="#fn-digitalwrite">digitalWrite</a>
+    <a href="#fn-digitalread">digitalRead</a>
+    <a href="#fn-analogwrite">analogWrite</a>
+    <a href="#fn-analogread">analogRead</a>
+    <a href="#fn-tone">tone</a>
+    <a href="#fn-notone">noTone</a>
+    <a href="#fn-delay">delay</a>
+    <a href="#fn-millis">millis</a>
+    <a href="#fn-map">map</a>
+    <a href="#fn-pulsein">pulseIn</a>
+    <a href="#fn-serial">Serial</a>
   </nav>
 
   <!-- BOARD ANATOMY -->
@@ -379,7 +408,7 @@
   </section>
 
   <!-- RGB LED -->
-  <section class="section" id="rgb" data-title="rgb led common cathode anode color mixing">
+  <section class="section" id="rgb" data-title="rgb led common cathode anode color mixing pwm">
     <div class="section-head"><span class="tag">05</span><h2>RGB LED</h2></div>
     <div class="card">
       <p>One LED package, three color channels (Red/Green/Blue) — mixed brightness produces any color, like a screen pixel.</p>
@@ -414,16 +443,9 @@
         <span class="pin-chip">Pin 4 → Blue</span>
       </div>
     </div>
-  </section>
-
-  <!-- PWM -->
-  <section class="section" id="pwm" data-title="pwm pulse width modulation analogwrite digitalwrite">
-    <div class="section-head"><span class="tag">06</span><h2>PWM &amp; analogWrite()</h2></div>
     <div class="card">
-      <p><strong>digitalWrite()</strong> can only go fully ON or fully OFF. <strong>analogWrite()</strong> simulates in-between brightness by rapidly pulsing the pin — Dim → Medium → Bright → Fully Bright.</p>
-      <p>Syntax: <code>analogWrite(pin, value);</code> — value 0–255.</p>
-    </div>
-    <pre><code><span class="kw">int</span> redPin = <span class="num">9</span>;
+      <h3>Sketch: cycling blink</h3>
+      <pre><code><span class="kw">int</span> redPin = <span class="num">9</span>;
 <span class="kw">int</span> greenPin = <span class="num">10</span>;
 <span class="kw">int</span> bluePin = <span class="num">11</span>;
 
@@ -452,12 +474,13 @@
   <span class="fn">digitalWrite</span>(bluePin, LOW);
   <span class="fn">delay</span>(<span class="num">500</span>);
 }</code></pre>
-    <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      <button class="copy-btn" onclick="copyCode(this)">copy</button>
+    </div>
   </section>
 
   <!-- BUTTON -->
   <section class="section" id="button" data-title="push button pull up pull down resistor switch">
-    <div class="section-head"><span class="tag">07</span><h2>Push Button</h2></div>
+    <div class="section-head"><span class="tag">06</span><h2>Push Button</h2></div>
     <div class="card">
       <p>A button connected with no resistor leaves the pin "floating" — it reads random noise when not pressed. A pull resistor fixes the default state.</p>
     </div>
@@ -475,7 +498,7 @@
 
   <!-- BUZZER -->
   <section class="section" id="buzzer" data-title="piezo buzzer frequency hertz note tone sa re ga ma pa dha ni">
-    <div class="section-head"><span class="tag">08</span><h2>Piezo Buzzer &amp; Notes</h2></div>
+    <div class="section-head"><span class="tag">07</span><h2>Piezo Buzzer &amp; Notes</h2></div>
     <div class="grid2">
       <div class="card">
         <h3>Frequency</h3>
@@ -507,7 +530,7 @@
 
   <!-- 9V BATTERY -->
   <section class="section" id="power" data-title="9v battery short circuit vin barrel jack">
-    <div class="section-head"><span class="tag">09</span><h2>9V Battery</h2></div>
+    <div class="section-head"><span class="tag">08</span><h2>9V Battery</h2></div>
     <div class="card">
       <p>+ terminal is the energy outlet, – terminal is the return path — current loops from + through the components and back to –.</p>
       <ul>
@@ -521,7 +544,7 @@
 
   <!-- POTENTIOMETER -->
   <section class="section" id="pot" data-title="potentiometer pot variable resistor wiper knob">
-    <div class="section-head"><span class="tag">10</span><h2>Potentiometer</h2></div>
+    <div class="section-head"><span class="tag">09</span><h2>Potentiometer</h2></div>
     <div class="card">
       <p>A resistor whose value changes as you turn a knob, via a sliding contact called the <strong>wiper</strong>.</p>
       <div class="pin-row">
@@ -533,19 +556,9 @@
     </div>
   </section>
 
-  <!-- MAP -->
-  <section class="section" id="map" data-title="map function range conversion translate">
-    <div class="section-head"><span class="tag">11</span><h2>map()</h2></div>
-    <div class="card">
-      <p>Converts a number from one range into another — like a translator between scales.</p>
-      <pre style="margin-top:14px"><code><span class="fn">map</span>(value, fromLow, fromHigh, toLow, toHigh)</code></pre>
-      <p style="margin-top:10px">Example: converting 0–100°C into 32–212°F is exactly what <code>map()</code> does in one line.</p>
-    </div>
-  </section>
-
   <!-- ULTRASONIC -->
   <section class="section" id="ultrasonic" data-title="ultrasonic sensor hc-sr04 distance trig echo pulsein">
-    <div class="section-head"><span class="tag">12</span><h2>Ultrasonic Sensor (HC-SR04)</h2></div>
+    <div class="section-head"><span class="tag">10</span><h2>Ultrasonic Sensor (HC-SR04)</h2></div>
     <div class="card">
       <p>Measures distance by timing a sound pulse's round trip — same principle bats and dolphins use.</p>
       <p><strong>Distance = (Speed of sound × Time) ÷ 2</strong> — divided by 2 because the wave travels out and back.</p>
@@ -590,7 +603,7 @@
 
   <!-- PIR -->
   <section class="section" id="pir" data-title="pir sensor passive infrared motion detection">
-    <div class="section-head"><span class="tag">13</span><h2>PIR Motion Sensor</h2></div>
+    <div class="section-head"><span class="tag">11</span><h2>PIR Motion Sensor</h2></div>
     <div class="card">
       <p><strong>Passive</strong> = it doesn't emit energy, only detects infrared (heat) radiation from bodies. Motion in front of it → HIGH signal. No motion → LOW.</p>
       <table>
@@ -604,7 +617,7 @@
 
   <!-- SERVO -->
   <section class="section" id="servo" data-title="micro servo motor angle position output device">
-    <div class="section-head"><span class="tag">14</span><h2>Micro Servo Motor</h2></div>
+    <div class="section-head"><span class="tag">12</span><h2>Micro Servo Motor</h2></div>
     <div class="card">
       <p>Unlike a DC motor that spins continuously, a servo moves to a specific angle (0°–180°) and holds it. It's an output device, driven by PWM.</p>
       <table>
@@ -629,6 +642,205 @@ Servo myServo;
     <div class="card" style="margin-top:16px">
       <h3>Real-world uses</h3>
       <p>Robot arms · automatic doors · smart dustbins · parking gates · pick-and-place robots.</p>
+    </div>
+  </section>
+
+  <!-- ============== CORE FUNCTIONS ============== -->
+
+  <!-- pinMode -->
+  <section class="section" id="fn-pinmode" data-title="pinmode setup input output pullup function">
+    <div class="section-head"><span class="tag">13</span><h2>pinMode()</h2></div>
+    <p class="section-sub">Core functions — the commands that actually move data on and off the board.</p>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">pinMode(pin, mode)</span>
+        <p>Tells a pin whether it should listen (INPUT) or speak (OUTPUT). Always called once inside <code>setup()</code> before you use the pin for anything else.</p>
+        <p><strong>mode:</strong> INPUT · OUTPUT · INPUT_PULLUP (enables the chip's internal pull-up resistor, so you can skip an external one)</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="kw">void</span> <span class="fn">setup</span>() {
+  <span class="fn">pinMode</span>(<span class="num">13</span>, OUTPUT);     <span class="cm">// pin 13 drives an LED</span>
+  <span class="fn">pinMode</span>(<span class="num">2</span>, INPUT_PULLUP); <span class="cm">// pin 2 reads a button</span>
+}</code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- digitalWrite -->
+  <section class="section" id="fn-digitalwrite" data-title="digitalwrite high low output led function">
+    <div class="section-head"><span class="tag">14</span><h2>digitalWrite()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">digitalWrite(pin, value)</span>
+        <p>Sets an OUTPUT pin fully ON or fully OFF. No in-between — this is a light switch, not a dimmer.</p>
+        <p><strong>value:</strong> HIGH (5V) · LOW (0V)</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="kw">void</span> <span class="fn">loop</span>() {
+  <span class="fn">digitalWrite</span>(<span class="num">13</span>, HIGH); <span class="cm">// LED on</span>
+  <span class="fn">delay</span>(<span class="num">1000</span>);
+  <span class="fn">digitalWrite</span>(<span class="num">13</span>, LOW);  <span class="cm">// LED off</span>
+  <span class="fn">delay</span>(<span class="num">1000</span>);
+}</code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- digitalRead -->
+  <section class="section" id="fn-digitalread" data-title="digitalread button sensor input function">
+    <div class="section-head"><span class="tag">15</span><h2>digitalRead()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">digitalRead(pin)</span>
+        <p>Checks an INPUT pin and reports back HIGH or LOW. The classic use is reading a button or a digital sensor's OUT pin.</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="kw">int</span> state = <span class="fn">digitalRead</span>(<span class="num">2</span>);
+<span class="kw">if</span> (state == HIGH) {
+  Serial.<span class="fn">println</span>(<span class="str">"Button pressed"</span>);
+}</code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- analogWrite -->
+  <section class="section" id="fn-analogwrite" data-title="analogwrite pwm dimming motor speed function">
+    <div class="section-head"><span class="tag">16</span><h2>analogWrite()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">analogWrite(pin, value)</span>
+        <p>Fakes an analog output using PWM — rapidly switching the pin on and off so fast it looks like a dimmed voltage. Only works on PWM pins, marked with a <code>~</code>: 3, 5, 6, 9, 10, 11.</p>
+        <p><strong>value:</strong> 0 (always off) to 255 (always on)</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="kw">void</span> <span class="fn">loop</span>() {
+  <span class="fn">analogWrite</span>(<span class="num">9</span>, <span class="num">128</span>); <span class="cm">// LED at ~50% brightness</span>
+}</code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- analogRead -->
+  <section class="section" id="fn-analogread" data-title="analogread adc sensor voltage function">
+    <div class="section-head"><span class="tag">17</span><h2>analogRead()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">analogRead(pin)</span>
+        <p>Reads a changing voltage on an analog pin (A0–A5) and converts it to a number using the onboard ADC. Used for sensors that output a range rather than just on/off.</p>
+        <p><strong>returns:</strong> 0 (0V) to 1023 (5V)</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="kw">int</span> light = <span class="fn">analogRead</span>(A0);
+Serial.<span class="fn">println</span>(light);</code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- tone -->
+  <section class="section" id="fn-tone" data-title="tone buzzer note frequency sound function">
+    <div class="section-head"><span class="tag">18</span><h2>tone()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">tone(pin, frequency, duration)</span>
+        <p>Makes a piezo buzzer sing a steady note by vibrating the pin at a chosen frequency. <code>duration</code> (ms) is optional — leave it out and the tone plays until <code>noTone()</code> stops it.</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="fn">tone</span>(<span class="num">8</span>, <span class="num">440</span>, <span class="num">500</span>); <span class="cm">// A4 (440Hz) for 500ms</span></code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- noTone -->
+  <section class="section" id="fn-notone" data-title="notone stop sound buzzer silence function">
+    <div class="section-head"><span class="tag">19</span><h2>noTone()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">noTone(pin)</span>
+        <p>Stops whatever tone() started on that pin. Needed if you called tone() without a duration, or want to cut a note short.</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="fn">tone</span>(<span class="num">8</span>, <span class="num">262</span>);  <span class="cm">// note starts, plays forever</span>
+<span class="fn">delay</span>(<span class="num">300</span>);
+<span class="fn">noTone</span>(<span class="num">8</span>);     <span class="cm">// silence</span></code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- delay -->
+  <section class="section" id="fn-delay" data-title="delay pause milliseconds blocking function">
+    <div class="section-head"><span class="tag">20</span><h2>delay()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">delay(ms)</span>
+        <p>Pauses the whole program for the given number of milliseconds. Simple, but the board can't do anything else — read a button, check a sensor — while it waits.</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="fn">delay</span>(<span class="num">1000</span>); <span class="cm">// pause for 1 second</span></code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+ 
+
+  <!-- map -->
+  <section class="section" id="fn-map" data-title="map function range conversion translate">
+    <div class="section-head"><span class="tag">22</span><h2>map()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">map(value, fromLow, fromHigh, toLow, toHigh)</span>
+        <p>Rescales a number from one range into another — like a translator between scales. Commonly used to turn a raw analogRead() (0–1023) into something useful, like a servo angle (0–180) or PWM value (0–255).</p>
+        <p>Example: converting 0–100°C into 32–212°F is exactly what <code>map()</code> does in one line.</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="kw">int</span> raw = <span class="fn">analogRead</span>(A0);                  <span class="cm">// 0-1023</span>
+<span class="kw">int</span> angle = <span class="fn">map</span>(raw, <span class="num">0</span>, <span class="num">1023</span>, <span class="num">0</span>, <span class="num">180</span>); <span class="cm">// 0-180</span></code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- pulseIn -->
+  <section class="section" id="fn-pulsein" data-title="pulsein ultrasonic echo timing function">
+    <div class="section-head"><span class="tag">23</span><h2>pulseIn()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">pulseIn(pin, value)</span>
+        <p>Measures how long (in microseconds) a pin stays HIGH or LOW. Its signature job is reading the Echo pin of an ultrasonic distance sensor.</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="kw">long</span> duration = <span class="fn">pulseIn</span>(echoPin, HIGH);
+<span class="kw">int</span> distanceCm = duration * <span class="num">0.034</span> / <span class="num">2</span>;</code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Serial -->
+  <section class="section" id="fn-serial" data-title="serial begin print println usb monitor function">
+    <div class="section-head"><span class="tag">24</span><h2>Serial.begin() / print() / println()</h2></div>
+    <div class="card fn-grid">
+      <div class="fn-desc">
+        <span class="sig">Serial.begin(baudRate)</span>
+        <p>Opens a communication channel between the Arduino and your computer over USB (using the TX/RX pins). <code>begin()</code> sets the speed once in <code>setup()</code>; <code>print()</code>/<code>println()</code> send text to the Serial Monitor, the latter adding a line break.</p>
+      </div>
+      <div class="fn-code">
+        <pre><code><span class="kw">void</span> <span class="fn">setup</span>() {
+  Serial.<span class="fn">begin</span>(<span class="num">9600</span>);
+}
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  Serial.<span class="fn">print</span>(<span class="str">"Distance: "</span>);
+  Serial.<span class="fn">println</span>(distanceCm);
+}</code></pre>
+        <button class="copy-btn" onclick="copyCode(this)">copy</button>
+      </div>
     </div>
   </section>
 

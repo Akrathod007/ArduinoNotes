@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arduino UNO — Field Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0f0d;
+    --bg-soft: #0f1613;
+    --board: #11201b;
+    --copper: #c97a4a;
+    --copper-bright: #ff9d5c;
+    --teal: #5fd9c4;
+    --teal-dim: #2c5f55;
+    --silk: #e8ede9;
+    --silk-dim: #93a39b;
+    --pad: #d9b27c;
+    --red-led: #ff5c5c;
+    --line: rgba(232,237,233,0.08);
+    --radius: 3px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(95,217,196,0.06), transparent 40%),
+      radial-gradient(circle at 85% 20%, rgba(201,122,74,0.06), transparent 45%),
+      var(--bg);
+    color:var(--silk);
+    font-family:'JetBrains Mono', monospace;
+    line-height:1.6;
+  }
+  h1,h2,h3,.disp{font-family:'Space Grotesk',sans-serif;}
+  ::selection{background:var(--teal-dim);color:#fff;}
+
+  a{color:var(--teal);}
+
+  /* ---------- trace rail ---------- */
+  .rail{
+    position:fixed; left:0; top:0; bottom:0; width:48px;
+    border-right:1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center;
+    padding-top:90px;
+    gap:0;
+    z-index:5;
+  }
+  .rail .node{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--bg-soft); border:2px solid var(--teal-dim);
+    margin-bottom:0; flex-shrink:0; transition:.25s;
+    cursor:pointer;
+  }
+  .rail .node.active{ background:var(--teal); border-color:var(--teal); box-shadow:0 0 8px var(--teal);}
+  .rail .seg{ width:2px; flex:1; background:var(--line); }
+  @media (max-width:900px){ .rail{display:none;} }
+
+  /* ---------- header ---------- */
+  header{
+    padding:64px 8vw 48px;
+    border-bottom:1px solid var(--line);
+    position:relative; overflow:hidden;
+  }
+  header::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:34px 34px;
+    mask-image:radial-gradient(ellipse at 70% 30%, black, transparent 70%);
+    opacity:.5;
+  }
+  .eyebrow{
+    font-size:.72rem; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--copper-bright); display:flex; align-items:center; gap:10px;
+    margin-bottom:18px; position:relative;
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;background:var(--red-led); box-shadow:0 0 8px var(--red-led); animation:blink 2.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+  header h1{
+    font-size:clamp(2.4rem,6vw,4.6rem); margin:0 0 14px; font-weight:700;
+    letter-spacing:-0.02em; color:#fff; position:relative;
+  }
+  header h1 span{color:var(--teal);}
+  header p.lead{
+    max-width:620px; color:var(--silk-dim); font-size:1rem; position:relative;
+  }
+  .pin-legend{
+    display:flex; gap:22px; flex-wrap:wrap; margin-top:30px; position:relative;
+  }
+  .pin-legend span{ font-size:.78rem; color:var(--silk-dim); display:flex; align-items:center; gap:7px;}
+  .swatch{width:11px;height:11px;border-radius:2px;display:inline-block;}
+
+  /* ---------- search ---------- */
+  .search-wrap{
+    position:sticky; top:0; z-index:20;
+    background:rgba(10,15,13,0.88); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+    padding:14px 8vw;
+  }
+  #search{
+    width:100%; max-width:420px;
+    background:var(--bg-soft); border:1px solid var(--line); border-radius:var(--radius);
+    color:var(--silk); padding:10px 14px; font-family:inherit; font-size:.85rem;
+    outline:none;
+  }
+  #search:focus{border-color:var(--teal-dim);}
+  #search::placeholder{color:var(--silk-dim);}
+
+  main{ padding:0 8vw 100px; max-width:1180px; margin:0 auto; }
+
+  /* ---------- toc chips ---------- */
+  .toc{
+    display:flex; flex-wrap:wrap; gap:8px;
+    margin:40px 0 8px;
+  }
+  .toc a{
+    text-decoration:none; font-size:.74rem; color:var(--silk-dim);
+    border:1px solid var(--line); padding:6px 12px; border-radius:20px;
+    transition:.2s;
+  }
+  .toc a:hover{ color:var(--teal); border-color:var(--teal-dim); }
+
+  /* ---------- component cards ---------- */
+  .section{
+    margin-top:74px; scroll-margin-top:80px;
+  }
+  .section-head{
+    display:flex; align-items:baseline; gap:14px; margin-bottom:22px;
+    border-bottom:1px solid var(--line); padding-bottom:14px;
+  }
+  .section-head .tag{
+    font-size:.7rem; color:var(--copper-bright); border:1px solid var(--copper);
+    padding:2px 8px; border-radius:20px; flex-shrink:0; white-space:nowrap;
+  }
+  .section-head h2{
+    font-size:1.55rem; color:#fff; margin:0; font-weight:600;
+  }
+
+  .card{
+    background:var(--board);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px 24px;
+    margin-bottom:16px;
+    position:relative;
+  }
+  .card::before{
+    content:""; position:absolute; left:-1px; top:14px; bottom:14px; width:2px;
+    background:var(--teal-dim);
+  }
+  .card h3{
+    margin:0 0 8px; font-size:1rem; color:var(--teal); font-weight:600;
+  }
+  .card p, .card li{ color:var(--silk-dim); font-size:.88rem; }
+  .card ul{ margin:8px 0 0; padding-left:20px; }
+  .card .badge{
+    display:inline-block; font-size:.68rem; background:var(--teal-dim); color:#dffaf3;
+    padding:1px 8px; border-radius:10px; margin-left:8px; vertical-align:middle;
+  }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  @media (max-width:760px){ .grid2,.grid3{ grid-template-columns:1fr; } }
+
+  /* ---------- tables ---------- */
+  table{ width:100%; border-collapse:collapse; font-size:.84rem; margin:6px 0; }
+  th,td{ text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); color:var(--silk-dim); }
+  th{ color:var(--silk); font-weight:600; font-size:.72rem; letter-spacing:.04em; text-transform:uppercase; }
+  tr:hover td{ color:var(--silk); background:rgba(95,217,196,0.03); }
+
+  /* ---------- code ---------- */
+  pre{
+    background:#070b09; border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; overflow-x:auto; font-size:.8rem; position:relative;
+    margin:10px 0 0;
+  }
+  pre::before{
+    content:"sketch.ino"; position:absolute; top:0; right:0;
+    font-size:.62rem; color:var(--silk-dim); background:var(--bg-soft);
+    padding:3px 10px; border-bottom-left-radius:var(--radius); border-left:1px solid var(--line); border-bottom:1px solid var(--line);
+  }
+  code{ font-family:'JetBrains Mono',monospace; }
+  .kw{color:#ff9d5c;} .fn{color:#5fd9c4;} .num{color:#d9b27c;} .cm{color:#5b6b63;} .str{color:#9fd99c;}
+
+  .copy-btn{
+    position:absolute; bottom:10px; right:10px; background:var(--bg-soft);
+    border:1px solid var(--line); color:var(--silk-dim); font-size:.65rem;
+    padding:4px 10px; border-radius:20px; cursor:pointer; font-family:inherit;
+  }
+  .copy-btn:hover{ color:var(--teal); border-color:var(--teal-dim); }
+
+  /* color truth table */
+  .colorbox{ width:14px;height:14px;border-radius:3px; display:inline-block; border:1px solid rgba(255,255,255,.15); vertical-align:middle; margin-right:6px;}
+
+  /* pinout strip */
+  .pin-row{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .pin-chip{
+    font-size:.7rem; padding:4px 9px; border-radius:4px; border:1px solid var(--line);
+    color:var(--silk-dim);
+  }
+  .pin-chip.pwm{ border-color:var(--copper); color:var(--copper-bright); }
+  .pin-chip.an{ border-color:var(--teal-dim); color:var(--teal); }
+
+  footer{
+    text-align:center; padding:50px 8vw; color:var(--silk-dim); font-size:.75rem;
+    border-top:1px solid var(--line);
+  }
+
+  .hide{ display:none !important; }
+</style>
+</head>
+<body>
+
+<div class="rail" id="rail"></div>
+
+<header>
+  <div class="eyebrow"><span class="dot"></span> ATMEGA328P · 16MHz · 5V LOGIC</div>
+  <h1>Arduino <span>UNO</span><br>Field Reference</h1>
+  <!-- <p class="lead">Every pin, part, and pattern on the board — board anatomy, breadboarding basics, and ready-to-paste sketches for buttons, RGB LEDs, buzzers, servos, ultrasonic and PIR sensors.</p> -->
+  <div class="pin-legend">
+    <span><span class="swatch" style="background:var(--teal)"></span>Digital / Logic</span>
+    <span><span class="swatch" style="background:var(--copper)"></span>PWM (~)</span>
+    <span><span class="swatch" style="background:var(--pad)"></span>Analog (A0–A5)</span>
+    <span><span class="swatch" style="background:var(--red-led)"></span>Power / GND</span>
+  </div>
+</header>
+
+<div class="search-wrap">
+  <input id="search" type="text" placeholder="Filter components… e.g. servo, PWM, pull-up">
+</div>
+
+<main>
+
+  <nav class="toc">
+    <a href="#board">Board Anatomy</a>
+    <a href="#pins">Pin Map</a>
+    <a href="#breadboard">Breadboard</a>
+    <a href="#parts">Core Parts</a>
+    <a href="#rgb">RGB LED</a>
+    <a href="#pwm">PWM</a>
+    <a href="#button">Button</a>
+    <a href="#buzzer">Buzzer</a>
+    <a href="#power">9V Battery</a>
+    <a href="#pot">Potentiometer</a>
+    <a href="#map">map()</a>
+    <a href="#ultrasonic">Ultrasonic</a>
+    <a href="#pir">PIR Motion</a>
+    <a href="#servo">Servo</a>
+  </nav>
+
+  <!-- BOARD ANATOMY -->
+  <section class="section" id="board" data-title="board anatomy reset usb fuse voltage regulator chip">
+    <div class="section-head"><span class="tag">01</span><h2>Board Anatomy</h2></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Reset Button</h3>
+        <p>Restarts the running program from the very beginning. Doesn't erase code — just re-runs <code>setup()</code>.</p>
+      </div>
+      <div class="card">
+        <h3>USB Port</h3>
+        <p>Uploads code from your computer and powers the board at the same time.</p>
+      </div>
+      <div class="card">
+        <h3>Poly Fuse</h3>
+        <p>A self-healing safety guard. Trips if too much current flows, recovers automatically once the fault clears.</p>
+      </div>
+      <div class="card">
+        <h3>ATmega16U2 <span class="badge">USB↔Serial</span></h3>
+        <p>Translator chip between your computer and the main microcontroller — carries code uploads and Serial Monitor traffic over USB.</p>
+      </div>
+      <div class="card">
+        <h3>Voltage Regulator</h3>
+        <p>Locks the supply at a steady 5V, protecting the board from an overvoltage external supply.</p>
+      </div>
+      <div class="card">
+        <h3>DC Jack</h3>
+        <p>Round socket for external power (adapter / battery) when USB isn't connected.</p>
+      </div>
+      <div class="card">
+        <h3>ATmega328P <span class="badge">main chip</span></h3>
+        <p>The brain. Stores your code, runs the program, and drives every pin.</p>
+      </div>
+      <div class="card">
+        <h3>Crystal Oscillator <span class="badge">16 MHz</span></h3>
+        <p>The board's clock — ticks 16 million times a second so timing (like <code>delay(1000)</code> meaning a real second) stays accurate.</p>
+      </div>
+      <div class="card">
+        <h3>Capacitors</h3>
+        <p>Tiny energy tanks. Keep the supply voltage stable and smooth out noise when a sensor or motor suddenly draws more current.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PIN MAP -->
+  <section class="section" id="pins" data-title="digital analog pwm tx rx pins logic levels">
+    <div class="section-head"><span class="tag">02</span><h2>Pin Map</h2></div>
+
+    <div class="card">
+      <h3>Digital Pins 0–13</h3>
+      <p>14 pins, each switchable between <strong>INPUT</strong> (reads HIGH/LOW) and <strong>OUTPUT</strong> (drives HIGH/LOW). HIGH = 5V · LOW = 0V.</p>
+      <div class="pin-row">
+        <span class="pin-chip">0 (RX)</span><span class="pin-chip">1 (TX)</span><span class="pin-chip">2</span>
+        <span class="pin-chip pwm">~3</span><span class="pin-chip">4</span><span class="pin-chip pwm">~5</span>
+        <span class="pin-chip pwm">~6</span><span class="pin-chip">7</span><span class="pin-chip">8</span>
+        <span class="pin-chip pwm">~9</span><span class="pin-chip pwm">~10</span><span class="pin-chip pwm">~11</span>
+        <span class="pin-chip">12</span><span class="pin-chip">13</span>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>PWM Pins <span class="badge">~ symbol</span></h3>
+        <p>3, 5, 6, 9, 10, 11 — can output "partial ON" signals for LED dimming or motor speed control via <code>analogWrite()</code>.</p>
+      </div>
+      <div class="card">
+        <h3>Analog Pins A0–A5</h3>
+        <p>Read voltages 0–5V and convert to a number 0–1023 via the ADC. Used with sensors that give changing values (light, temperature, sound).</p>
+        <div class="pin-row">
+          <span class="pin-chip an">A0</span><span class="pin-chip an">A1</span><span class="pin-chip an">A2</span>
+          <span class="pin-chip an">A3</span><span class="pin-chip an">A4</span><span class="pin-chip an">A5</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>TX / RX — Serial Communication</h3>
+        <p><strong>TX</strong> = Transmit (send) · <strong>RX</strong> = Receive (get). Pin 1 = TX, Pin 0 = RX.</p>
+        <ul>
+          <li>Upload: computer TX → Arduino RX</li>
+          <li>Serial Monitor: Arduino TX → computer RX</li>
+          <li>Onboard TX/RX LEDs blink to show data flowing</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Power Pins</h3>
+        <table>
+          <tr><th>Pin</th><th>Gives</th></tr>
+          <tr><td>5V</td><td>5 volts to sensors/modules</td></tr>
+          <tr><td>3.3V</td><td>3.3 volts</td></tr>
+          <tr><td>GND</td><td>Ground (negative side)</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- BREADBOARD -->
+  <section class="section" id="breadboard" data-title="breadboard power rails terminal strips prototype">
+    <div class="section-head"><span class="tag">03</span><h2>Breadboard Basics</h2></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Power Rails (side lines)</h3>
+        <p>Long vertical columns marked <strong>+</strong> (red) and <strong>–</strong> (blue/black) running the length of the board. Every hole in a column is internally connected — used to distribute 5V and GND to the whole circuit.</p>
+      </div>
+      <div class="card">
+        <h3>Terminal Strips (middle area)</h3>
+        <p>Split into two halves by a center gap. Each row of 5 holes is connected vertically — this is where resistors, LEDs, and ICs get plugged in.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CORE PARTS -->
+  <section class="section" id="parts" data-title="resistor 220 330 1k ohm">
+    <div class="section-head"><span class="tag">04</span><h2>Core Parts: Resistor</h2></div>
+    <div class="card">
+      <h3>Resistor</h3>
+      <p>Limits current flow to protect LEDs, sensors, and the board itself.</p>
+      <table>
+        <tr><th>Value</th><th>Typical use</th></tr>
+        <tr><td>220Ω – 330Ω</td><td>LEDs</td></tr>
+        <tr><td>1kΩ (1000Ω)</td><td>Basic circuits</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- RGB LED -->
+  <section class="section" id="rgb" data-title="rgb led common cathode anode color mixing">
+    <div class="section-head"><span class="tag">05</span><h2>RGB LED</h2></div>
+    <div class="card">
+      <p>One LED package, three color channels (Red/Green/Blue) — mixed brightness produces any color, like a screen pixel.</p>
+      <table>
+        <tr><th>R</th><th>G</th><th>B</th><th>Result</th></tr>
+        <tr><td><span class="colorbox" style="background:#ff5c5c"></span>ON</td><td>OFF</td><td>OFF</td><td>Red</td></tr>
+        <tr><td>OFF</td><td><span class="colorbox" style="background:#5fd99c"></span>ON</td><td>OFF</td><td>Green</td></tr>
+        <tr><td>OFF</td><td>OFF</td><td><span class="colorbox" style="background:#5c9aff"></span>ON</td><td>Blue</td></tr>
+        <tr><td>ON</td><td>ON</td><td>OFF</td><td>Yellow</td></tr>
+        <tr><td>ON</td><td>OFF</td><td>ON</td><td>Magenta</td></tr>
+        <tr><td>OFF</td><td>ON</td><td>ON</td><td>Cyan</td></tr>
+        <tr><td>ON</td><td>ON</td><td>ON</td><td>White</td></tr>
+        <tr><td>OFF</td><td>OFF</td><td>OFF</td><td>Black (off)</td></tr>
+      </table>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Common Cathode (CC)</h3>
+        <p>All negative pins tied to GND. Each color pin driven HIGH to turn it on. <strong>Most common in Arduino kits.</strong></p>
+      </div>
+      <div class="card">
+        <h3>Common Anode (CA)</h3>
+        <p>All positive pins tied to +5V. Each color pin driven LOW to turn it on.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Pinout (4 pins)</h3>
+      <div class="pin-row">
+        <span class="pin-chip">Pin 1 → Red</span>
+        <span class="pin-chip">Pin 2 → Common (GND/+5V)</span>
+        <span class="pin-chip">Pin 3 → Green</span>
+        <span class="pin-chip">Pin 4 → Blue</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PWM -->
+  <section class="section" id="pwm" data-title="pwm pulse width modulation analogwrite digitalwrite">
+    <div class="section-head"><span class="tag">06</span><h2>PWM &amp; analogWrite()</h2></div>
+    <div class="card">
+      <p><strong>digitalWrite()</strong> can only go fully ON or fully OFF. <strong>analogWrite()</strong> simulates in-between brightness by rapidly pulsing the pin — Dim → Medium → Bright → Fully Bright.</p>
+      <p>Syntax: <code>analogWrite(pin, value);</code> — value 0–255.</p>
+    </div>
+    <pre><code><span class="kw">int</span> redPin = <span class="num">9</span>;
+<span class="kw">int</span> greenPin = <span class="num">10</span>;
+<span class="kw">int</span> bluePin = <span class="num">11</span>;
+
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  <span class="fn">pinMode</span>(redPin, OUTPUT);
+  <span class="fn">pinMode</span>(greenPin, OUTPUT);
+  <span class="fn">pinMode</span>(bluePin, OUTPUT);
+}
+
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  <span class="cm">// Red blink</span>
+  <span class="fn">digitalWrite</span>(redPin, HIGH);
+  <span class="fn">delay</span>(<span class="num">1000</span>);
+  <span class="fn">digitalWrite</span>(redPin, LOW);
+  <span class="fn">delay</span>(<span class="num">500</span>);
+
+  <span class="cm">// Green blink</span>
+  <span class="fn">digitalWrite</span>(greenPin, HIGH);
+  <span class="fn">delay</span>(<span class="num">1000</span>);
+  <span class="fn">digitalWrite</span>(greenPin, LOW);
+  <span class="fn">delay</span>(<span class="num">500</span>);
+
+  <span class="cm">// Blue blink</span>
+  <span class="fn">digitalWrite</span>(bluePin, HIGH);
+  <span class="fn">delay</span>(<span class="num">1000</span>);
+  <span class="fn">digitalWrite</span>(bluePin, LOW);
+  <span class="fn">delay</span>(<span class="num">500</span>);
+}</code></pre>
+    <button class="copy-btn" onclick="copyCode(this)">copy</button>
+  </section>
+
+  <!-- BUTTON -->
+  <section class="section" id="button" data-title="push button pull up pull down resistor switch">
+    <div class="section-head"><span class="tag">07</span><h2>Push Button</h2></div>
+    <div class="card">
+      <p>A button connected with no resistor leaves the pin "floating" — it reads random noise when not pressed. A pull resistor fixes the default state.</p>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Pull-Down</h3>
+        <p>Resistor to GND. Default = <strong>LOW</strong>. Pressed → connects to 5V → reads <strong>HIGH</strong>.</p>
+      </div>
+      <div class="card">
+        <h3>Pull-Up</h3>
+        <p>Resistor to 5V. Default = <strong>HIGH</strong>. Pressed → connects to GND → reads <strong>LOW</strong>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUZZER -->
+  <section class="section" id="buzzer" data-title="piezo buzzer frequency hertz note tone sa re ga ma pa dha ni">
+    <div class="section-head"><span class="tag">08</span><h2>Piezo Buzzer &amp; Notes</h2></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Frequency</h3>
+        <p>How many times a signal repeats per second, in Hertz (Hz). Low frequency (~200Hz) = deep buzz. High frequency (~2000Hz) = sharp tone.</p>
+      </div>
+      <div class="card">
+        <h3>Notes</h3>
+        <p>A musical note is just a name for a specific frequency.</p>
+      </div>
+    </div>
+    <div class="card">
+      <table>
+        <tr><th>Note</th><th>Frequency (Hz)</th></tr>
+        <tr><td>Sa (C4)</td><td>262</td></tr>
+        <tr><td>Re (D4)</td><td>294</td></tr>
+        <tr><td>Ga (E4)</td><td>330</td></tr>
+        <tr><td>Ma (F4)</td><td>349</td></tr>
+        <tr><td>Pa (G4)</td><td>392</td></tr>
+        <tr><td>Dha (A4)</td><td>440</td></tr>
+        <tr><td>Ni (B4)</td><td>494</td></tr>
+        <tr><td>Sa (C5)</td><td>523</td></tr>
+      </table>
+    </div>
+    <pre><code><span class="cm">// mapping a sensor value range to a note</span>
+<span class="kw">if</span> (val >= <span class="num">0</span> && val <= <span class="num">150</span>) <span class="fn">tone</span>(<span class="num">8</span>, <span class="num">262</span>);
+<span class="kw">if</span> (val >= <span class="num">151</span> && val <= <span class="num">300</span>) <span class="fn">tone</span>(<span class="num">8</span>, <span class="num">294</span>);</code></pre>
+    <button class="copy-btn" onclick="copyCode(this)">copy</button>
+  </section>
+
+  <!-- 9V BATTERY -->
+  <section class="section" id="power" data-title="9v battery short circuit vin barrel jack">
+    <div class="section-head"><span class="tag">09</span><h2>9V Battery</h2></div>
+    <div class="card">
+      <p>+ terminal is the energy outlet, – terminal is the return path — current loops from + through the components and back to –.</p>
+      <ul>
+        <li>Used in remotes, toys, smoke detectors, and Arduino (via Vin or barrel jack)</li>
+        <li><strong>Never</strong> connect + directly to – — that's a short circuit and will damage the battery</li>
+        <li>Always pair an LED with a 220–330Ω resistor</li>
+        <li>Supplies more current than Arduino pins can — good for motors or several LEDs at once</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- POTENTIOMETER -->
+  <section class="section" id="pot" data-title="potentiometer pot variable resistor wiper knob">
+    <div class="section-head"><span class="tag">10</span><h2>Potentiometer</h2></div>
+    <div class="card">
+      <p>A resistor whose value changes as you turn a knob, via a sliding contact called the <strong>wiper</strong>.</p>
+      <div class="pin-row">
+        <span class="pin-chip">Side pin → 5V</span>
+        <span class="pin-chip">Side pin → GND</span>
+        <span class="pin-chip an">Middle (wiper) → A0</span>
+      </div>
+      <p style="margin-top:10px">Wiper near 5V side → high output · near GND side → low output · in between → a voltage from 0–5V.</p>
+    </div>
+  </section>
+
+  <!-- MAP -->
+  <section class="section" id="map" data-title="map function range conversion translate">
+    <div class="section-head"><span class="tag">11</span><h2>map()</h2></div>
+    <div class="card">
+      <p>Converts a number from one range into another — like a translator between scales.</p>
+      <pre style="margin-top:14px"><code><span class="fn">map</span>(value, fromLow, fromHigh, toLow, toHigh)</code></pre>
+      <p style="margin-top:10px">Example: converting 0–100°C into 32–212°F is exactly what <code>map()</code> does in one line.</p>
+    </div>
+  </section>
+
+  <!-- ULTRASONIC -->
+  <section class="section" id="ultrasonic" data-title="ultrasonic sensor hc-sr04 distance trig echo pulsein">
+    <div class="section-head"><span class="tag">12</span><h2>Ultrasonic Sensor (HC-SR04)</h2></div>
+    <div class="card">
+      <p>Measures distance by timing a sound pulse's round trip — same principle bats and dolphins use.</p>
+      <p><strong>Distance = (Speed of sound × Time) ÷ 2</strong> — divided by 2 because the wave travels out and back.</p>
+      <table>
+        <tr><th>Pin</th><th>Function</th></tr>
+        <tr><td>VCC</td><td>+5V</td></tr>
+        <tr><td>Trig</td><td>Sends the pulse <span class="badge">OUTPUT</span></td></tr>
+        <tr><td>Echo</td><td>Receives the reflection <span class="badge">INPUT</span></td></tr>
+        <tr><td>GND</td><td>Ground</td></tr>
+      </table>
+    </div>
+    <pre><code><span class="kw">int</span> trigPin = <span class="num">9</span>;
+<span class="kw">int</span> echoPin = <span class="num">10</span>;
+<span class="kw">long</span> duration;
+<span class="kw">int</span> distance;
+
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  <span class="fn">pinMode</span>(trigPin, OUTPUT);
+  <span class="fn">pinMode</span>(echoPin, INPUT);
+  Serial.<span class="fn">begin</span>(<span class="num">9600</span>);
+}
+
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  <span class="fn">digitalWrite</span>(trigPin, LOW);
+  <span class="fn">delayMicroseconds</span>(<span class="num">2</span>);
+
+  <span class="fn">digitalWrite</span>(trigPin, HIGH);
+  <span class="fn">delayMicroseconds</span>(<span class="num">10</span>);
+  <span class="fn">digitalWrite</span>(trigPin, LOW);
+
+  duration = <span class="fn">pulseIn</span>(echoPin, HIGH);
+  distance = duration * <span class="num">0.034</span> / <span class="num">2</span>;
+
+  Serial.<span class="fn">print</span>(<span class="str">"Distance: "</span>);
+  Serial.<span class="fn">print</span>(distance);
+  Serial.<span class="fn">println</span>(<span class="str">" cm"</span>);
+
+  <span class="fn">delay</span>(<span class="num">500</span>);
+}</code></pre>
+    <button class="copy-btn" onclick="copyCode(this)">copy</button>
+  </section>
+
+  <!-- PIR -->
+  <section class="section" id="pir" data-title="pir sensor passive infrared motion detection">
+    <div class="section-head"><span class="tag">13</span><h2>PIR Motion Sensor</h2></div>
+    <div class="card">
+      <p><strong>Passive</strong> = it doesn't emit energy, only detects infrared (heat) radiation from bodies. Motion in front of it → HIGH signal. No motion → LOW.</p>
+      <table>
+        <tr><th>Pin</th><th>Connection</th></tr>
+        <tr><td>VCC</td><td>5V</td></tr>
+        <tr><td>GND</td><td>GND</td></tr>
+        <tr><td>OUT</td><td>Digital pin (e.g. Pin 2)</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- SERVO -->
+  <section class="section" id="servo" data-title="micro servo motor angle position output device">
+    <div class="section-head"><span class="tag">14</span><h2>Micro Servo Motor</h2></div>
+    <div class="card">
+      <p>Unlike a DC motor that spins continuously, a servo moves to a specific angle (0°–180°) and holds it. It's an output device, driven by PWM.</p>
+      <table>
+        <tr><th>Wire</th><th>Function</th></tr>
+        <tr><td>Brown / Black</td><td>GND</td></tr>
+        <tr><td>Red</td><td>5V (VCC)</td></tr>
+        <tr><td>Orange / Yellow</td><td>Signal</td></tr>
+      </table>
+    </div>
+    <pre><code>#<span class="kw">include</span> &lt;Servo.h&gt;
+
+Servo myServo;
+
+<span class="kw">void</span> <span class="fn">setup</span>() {
+  myServo.<span class="fn">attach</span>(<span class="num">9</span>);
+}
+
+<span class="kw">void</span> <span class="fn">loop</span>() {
+  myServo.<span class="fn">write</span>(<span class="num">90</span>);   <span class="cm">// 0°=min · 90°=center · 180°=max</span>
+}</code></pre>
+    <button class="copy-btn" onclick="copyCode(this)">copy</button>
+    <div class="card" style="margin-top:16px">
+      <h3>Real-world uses</h3>
+      <p>Robot arms · automatic doors · smart dustbins · parking gates · pick-and-place robots.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>Arduino UNO Field Reference — built for breadboard sessions, not boardrooms.</footer>
+
+<script>
+  // build the side rail nodes from sections
+  const sections = document.querySelectorAll('.section');
+  const rail = document.getElementById('rail');
+  sections.forEach((s,i)=>{
+    const node = document.createElement('div');
+    node.className='node';
+    node.dataset.target = s.id;
+    node.title = s.id;
+    node.onclick = ()=> s.scrollIntoView({behavior:'smooth'});
+    rail.appendChild(node);
+    if(i < sections.length-1){
+      const seg = document.createElement('div');
+      seg.className='seg';
+      rail.appendChild(seg);
+    }
+  });
+  const nodes = rail.querySelectorAll('.node');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        nodes.forEach(n=>n.classList.remove('active'));
+        const n = rail.querySelector(`[data-target="${e.target.id}"]`);
+        if(n) n.classList.add('active');
+      }
+    });
+  }, {rootMargin:'-40% 0px -50% 0px'});
+  sections.forEach(s=>io.observe(s));
+
+  // search filter
+  const search = document.getElementById('search');
+  search.addEventListener('input', ()=>{
+    const q = search.value.trim().toLowerCase();
+    sections.forEach(s=>{
+      const hay = (s.dataset.title + ' ' + s.innerText).toLowerCase();
+      s.classList.toggle('hide', q.length>0 && !hay.includes(q));
+    });
+  });
+
+  function copyCode(btn){
+    const pre = btn.previousElementSibling;
+    navigator.clipboard.writeText(pre.innerText);
+    const old = btn.innerText;
+    btn.innerText = 'copied';
+    setTimeout(()=> btn.innerText = old, 1200);
+  }
+</script>
+
+</body>
+</html>
